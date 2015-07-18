@@ -1,0 +1,22 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        ""
+    ],
+    "companyName": "juho.makinen@gmail.com",
+    "longName": "GaroWatchface",
+    "projectType": "native",
+    "resources": {
+        "media": []
+    },
+    "sdkVersion": "3",
+    "shortName": "GaroWatchface",
+    "targetPlatforms": [
+        "basalt"
+    ],
+    "uuid": "089e163b-70fe-42ab-bb86-3220f0d51a5c",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": true
+    }
+}
