@@ -17,7 +17,7 @@ char *months[] =  {"January", "February", "March", "April", "May", "June", "July
 
 static char unread_sms_buffer[4];
 
-  
+static char bt_notification_delay = 0;
 
 static const uint32_t const disconnect_segments[] = { 300, 300, 300, 300, 300 };
 VibePattern disconnecte_pat = {
@@ -98,15 +98,44 @@ static void update_time() {
   text_layer_set_text(s_time_layer, time_buffer);
   text_layer_set_text(s_date_layer, date_buffer);
   
- 
+  // If bt_notification_delay is set to something else than zero we go over
+  // a short delay by incrementing the bt_notification_delay counter until
+  // we trigger the vibration. After the vibration is triggered we'll stop
+  // at a final state so that no further vibers are triggered.
+  //
+  // The bt_handler can at any time reset the bt_notification_delay back to zero
+  // if the connection is resumed.
+  if (bt_notification_delay == 1) {
+    bt_notification_delay = 2;
+  } else if (bt_notification_delay == 2) {
+    vibes_enqueue_custom_pattern(disconnecte_pat);    
+    bt_notification_delay = 3;
+  }
+}
+
+// Checks if local time is around the sleeping period to prevent waking user up.
+bool isDaytime() {
+  time_t temp = time(NULL); 
+  struct tm *tick_time = localtime(&temp);
+  if (tick_time->tm_hour > 6 && tick_time->tm_hour < 22) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void bt_handler(bool connected) {
   if (connected == false) {
+    layer_set_hidden((Layer *)s_not_connected_layer, false);      
+    
+    if (isDaytime()) {
       vibes_enqueue_custom_pattern(disconnecte_pat);
-      layer_set_hidden((Layer *)s_not_connected_layer, false);
+    } else {
+      bt_notification_delay = 1;
+    }
   } else {
       layer_set_hidden((Layer *)s_not_connected_layer, true);
+      bt_notification_delay = 0; 
   }
 }
 
@@ -181,6 +210,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 }
 
 static void init() {
+  bt_notification_delay = 0;
   app_message_register_inbox_received(inbox_received_handler);
   app_message_register_inbox_dropped(inbox_dropped_handler);
   
