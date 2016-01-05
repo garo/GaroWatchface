@@ -5,7 +5,7 @@ static TextLayer *s_time_layer;
 static TextLayer *s_date_layer;
 static TextLayer *s_not_connected_layer;
 static TextLayer *s_unread_sms_layer;
-
+static TextLayer *s_current_hr_layer;
 
 char *months[] =  {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
 
@@ -14,8 +14,10 @@ char *months[] =  {"January", "February", "March", "April", "May", "June", "July
 #define OP_SHOW_NOTCONNECTED 2
 #define OP_FIND_ME 3
 #define OP_UNREAD_MESSAGE_COUNT 4
+#define OP_CURRENT_HR 5
 
 static char unread_sms_buffer[4];
+static char current_hr_buffer[4];
 
 static char bt_notification_delay = 0;
 
@@ -54,6 +56,16 @@ static void inbox_received_handler(DictionaryIterator *iterator, void *context) 
         
         text_layer_set_text(s_unread_sms_layer, unread_sms_buffer);
         APP_LOG(APP_LOG_LEVEL_INFO, "set sms msg: %s", unread_sms_buffer);
+        break;
+      case OP_CURRENT_HR:
+        if ((int)t->value->int32 > 0) {
+          snprintf(current_hr_buffer, sizeof(current_hr_buffer), "%d", (int)t->value->int32);
+        } else {
+          strncpy(current_hr_buffer, "", sizeof(current_hr_buffer));
+        }
+        
+        text_layer_set_text(s_current_hr_layer, current_hr_buffer);
+        APP_LOG(APP_LOG_LEVEL_INFO, "set current hr: %s", current_hr_buffer);
 
       break;          
       
@@ -141,7 +153,7 @@ void bt_handler(bool connected) {
 
 static void main_window_load(Window *window) {
   // Create status TextLayer
-  s_unread_sms_layer = text_layer_create(GRect(100, 0, 40, 30));
+  s_unread_sms_layer = text_layer_create(GRect(60, 0, 80, 30));
   text_layer_set_background_color(s_unread_sms_layer, GColorClear);
   text_layer_set_text_color(s_unread_sms_layer, GColorBlack);
 
@@ -152,6 +164,21 @@ static void main_window_load(Window *window) {
 
   // Add it as a child layer to the Window's root layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_unread_sms_layer));
+  
+  
+  // Create current hearth rate layer
+  s_current_hr_layer = text_layer_create(GRect(5, 0, 40, 30));
+  text_layer_set_background_color(s_current_hr_layer, GColorClear);
+  text_layer_set_text_color(s_current_hr_layer, GColorBlack);
+
+  // Improve the layout to be more like a watchface
+  text_layer_set_font(s_current_hr_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+  text_layer_set_text_alignment(s_current_hr_layer, GTextAlignmentLeft);
+  text_layer_set_text(s_current_hr_layer, "");
+
+  // Add it as a child layer to the Window's root layer
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_current_hr_layer));
+
   
   // Create time TextLayer
   s_time_layer = text_layer_create(GRect(00, 95, 144, 50));
